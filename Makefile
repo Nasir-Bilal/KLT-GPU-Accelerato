@@ -53,7 +53,7 @@ lib: $(ARCH:.c=.o)
 
 # Compile examples with profiler support
 $(SRC_DIR)/example%: $(SRC_DIR)/libklt.a
-	$(CC) -O3 $(CFLAGS) -pg -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm $(LDFLAGS)
+	$(CC) -O1 $(CFLAGS) -pg -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm $(LDFLAGS)
 
 
 depend:
