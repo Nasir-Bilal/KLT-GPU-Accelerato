@@ -19,6 +19,7 @@ FLAG1 = -DNDEBUG
 ######################################################################
 # Add your favorite C flags here.
 CFLAGS = $(FLAG1) $(FLAG2)
+LDFLAGS = -pg   
 
 ######################################################################
 # There should be no need to modify anything below this line (but
@@ -58,6 +59,5 @@ depend:
 	makedepend $(ARCH) $(EXAMPLES)
 
 clean:
-	rm -f $(SRC_DIR)/*.o $(SRC_DIR)/libklt.a $(EXAMPLES:.c=) \
-	      *.tar *.tar.gz $(SRC_DIR)/feat*.ppm $(SRC_DIR)/features.ft \
-	      $(SRC_DIR)/features.txt
+	rm -f *.o *.a $(EXAMPLES:.c=) *.tar *.tar.gz libklt.a \
+	      feat*.ppm features.ft features.txt
