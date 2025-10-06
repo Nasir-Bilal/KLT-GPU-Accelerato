@@ -21,52 +21,43 @@ FLAG1 = -DNDEBUG
 CFLAGS = $(FLAG1) $(FLAG2)
 
 ######################################################################
-# Define current working source directory (added)
-currentDirectory = src/V1
-
-######################################################################
 # There should be no need to modify anything below this line (but
 # feel free to if you want).
 
-EXAMPLES = $(currentDirectory)/example1.c $(currentDirectory)/example2.c $(currentDirectory)/example3.c \
-           $(currentDirectory)/example4.c $(currentDirectory)/example5.c
-ARCH = $(currentDirectory)/convolve.c $(currentDirectory)/error.c $(currentDirectory)/pnmio.c \
-       $(currentDirectory)/pyramid.c $(currentDirectory)/selectGoodFeatures.c \
-       $(currentDirectory)/storeFeatures.c $(currentDirectory)/trackFeatures.c \
-       $(currentDirectory)/klt.c $(currentDirectory)/klt_util.c $(currentDirectory)/writeFeatures.c
+SRC_DIR = src/V1
+
+EXAMPLES = $(SRC_DIR)/example1.c $(SRC_DIR)/example2.c $(SRC_DIR)/example3.c \
+           $(SRC_DIR)/example4.c $(SRC_DIR)/example5.c
+
+ARCH = $(SRC_DIR)/convolve.c $(SRC_DIR)/error.c $(SRC_DIR)/pnmio.c \
+       $(SRC_DIR)/pyramid.c $(SRC_DIR)/selectGoodFeatures.c \
+       $(SRC_DIR)/storeFeatures.c $(SRC_DIR)/trackFeatures.c \
+       $(SRC_DIR)/klt.c $(SRC_DIR)/klt_util.c $(SRC_DIR)/writeFeatures.c
+
 LIB = -L/usr/local/lib -L/usr/lib
 
 .SUFFIXES:  .c .o
 
-all:  lib $(notdir $(EXAMPLES:.c=))
+all: lib $(EXAMPLES:.c=)
 
-$(currentDirectory)/%.o: $(currentDirectory)/%.c
+# Compile .c to .o
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
+# Build static library
 lib: $(ARCH:.c=.o)
-	rm -f $(currentDirectory)/libklt.a
-	ar ruv $(currentDirectory)/libklt.a $(ARCH:.c=.o)
-	rm -f $(currentDirectory)/*.o
+	rm -f $(SRC_DIR)/libklt.a
+	ar ruv $(SRC_DIR)/libklt.a $(ARCH:.c=.o)
+	rm -f $(SRC_DIR)/*.o
 
-example1: $(currentDirectory)/libklt.a
-	$(CC) -O3 $(CFLAGS) -o $(currentDirectory)/example1 $(currentDirectory)/example1.c -L$(currentDirectory) -lklt $(LIB) -lm
-
-example2: $(currentDirectory)/libklt.a
-	$(CC) -O3 $(CFLAGS) -o $(currentDirectory)/example2 $(currentDirectory)/example2.c -L$(currentDirectory) -lklt $(LIB) -lm
-
-example3: $(currentDirectory)/libklt.a
-	$(CC) -O3 $(CFLAGS) -o $(currentDirectory)/example3 $(currentDirectory)/example3.c -L$(currentDirectory) -lklt $(LIB) -lm
-
-example4: $(currentDirectory)/libklt.a
-	$(CC) -O3 $(CFLAGS) -o $(currentDirectory)/example4 $(currentDirectory)/example4.c -L$(currentDirectory) -lklt $(LIB) -lm
-
-example5: $(currentDirectory)/libklt.a
-	$(CC) -O3 $(CFLAGS) -o $(currentDirectory)/example5 $(currentDirectory)/example5.c -L$(currentDirectory) -lklt $(LIB) -lm
+# Compile examples
+$(SRC_DIR)/example%: $(SRC_DIR)/libklt.a
+	$(CC) -O3 $(CFLAGS) -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm
 
 depend:
 	makedepend $(ARCH) $(EXAMPLES)
 
 clean:
-	rm -f $(currentDirectory)/*.o $(currentDirectory)/*.a $(currentDirectory)/example* \
-	      *.tar *.tar.gz $(currentDirectory)/libklt.a feat*.ppm features.ft features.txt
-
+	rm -f $(SRC_DIR)/*.o $(SRC_DIR)/libklt.a $(EXAMPLES:.c=) \
+	      *.tar *.tar.gz $(SRC_DIR)/feat*.ppm $(SRC_DIR)/features.ft \
+	      $(SRC_DIR)/features.txt
