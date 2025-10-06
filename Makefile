@@ -61,4 +61,4 @@ depend:
 
 clean:
 	rm -f *.o *.a $(EXAMPLES:.c=) *.tar *.tar.gz libklt.a \
-	      feat*.ppm features.ft features.txt profile.txt *.out
+	      feat*.ppm features.ft features.txt profile*.txt *.out

@@ -1,6 +1,9 @@
 
 ---
 
+---
+
+## Requirements
 ## Requirements
 
 - GCC compiler
@@ -11,7 +14,13 @@
 ---
 
 ## Compile, Run, and Profile Example3
+- Input files (`img0.pgm`, `img1.pgm`, ...) should be in `src/V1/`  
 
+---
+
+## Compile, Run, and Profile Example3
+
+You can use the following **single copy-paste command** to compile everything, run `example3`, and generate the profiling report:
 You can use the following **single copy-paste command** to compile everything, run `example3`, and generate the profiling report:
 
 ```bash
@@ -22,7 +31,7 @@ make
 ./src/V1/example3
 
 # Generate gprof report in src/V1/profile_example3.txt
-gprof ./src/V1/example3 src/V1/gmon.out > profile_example3.txt
+gprof ./src/V1/example3 src/V1/gmon.out > src/V1/profile_example3.txt
 
 # Open the profile report
-less profile_example3.txt
+less src/V1/profile_example3.txt
