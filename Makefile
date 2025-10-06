@@ -43,7 +43,7 @@ all: lib $(EXAMPLES:.c=)
 
 # Compile .c to .o
 $(SRC_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) -pg $< -o $@
 
 # Build static library
 lib: $(ARCH:.c=.o)
@@ -51,13 +51,14 @@ lib: $(ARCH:.c=.o)
 	ar ruv $(SRC_DIR)/libklt.a $(ARCH:.c=.o)
 	rm -f $(SRC_DIR)/*.o
 
-# Compile examples
+# Compile examples with profiler support
 $(SRC_DIR)/example%: $(SRC_DIR)/libklt.a
-	$(CC) -O3 $(CFLAGS) -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm
+	$(CC) -O3 $(CFLAGS) -pg -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm $(LDFLAGS)
+
 
 depend:
 	makedepend $(ARCH) $(EXAMPLES)
 
 clean:
 	rm -f *.o *.a $(EXAMPLES:.c=) *.tar *.tar.gz libklt.a \
-	      feat*.ppm features.ft features.txt
+	      feat*.ppm features.ft features.txt profile.txt *.out
