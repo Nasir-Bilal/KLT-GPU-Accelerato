@@ -25,7 +25,7 @@ LDFLAGS = -pg
 # There should be no need to modify anything below this line (but
 # feel free to if you want).
 
-SRC_DIR = src/V1
+SRC_DIR = src/V2
 
 EXAMPLES = $(SRC_DIR)/example1.c $(SRC_DIR)/example2.c $(SRC_DIR)/example3.c \
            $(SRC_DIR)/example4.c $(SRC_DIR)/example5.c
