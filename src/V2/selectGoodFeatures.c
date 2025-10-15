@@ -18,6 +18,7 @@
 #include "klt.h"
 #include "klt_util.h"
 #include "pyramid.h"
+#include "cudaCode.h"
 
 int KLT_verbose = 1;
 
@@ -293,6 +294,8 @@ static float _minEigenvalue(float gxx, float gxy, float gyy)
 	
 
 /*********************************************************************/
+
+
 
 void _KLTSelectGoodFeatures(
   KLT_TrackingContext tc,
