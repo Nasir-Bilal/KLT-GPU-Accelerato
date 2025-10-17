@@ -419,6 +419,7 @@ void _KLTSelectGoodFeatures(
           val = (float) limit;
         }
         *ptr++ = (int) val;
+        printf("%f",val);
         npoints++;
       }
   }

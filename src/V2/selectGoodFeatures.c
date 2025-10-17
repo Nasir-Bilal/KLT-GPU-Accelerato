@@ -398,7 +398,11 @@ void _KLTSelectGoodFeatures(
 
     /* For most of the pixels in the image, do ... */
     ptr = pointlist;
-     launchKLTSelectGoodFeatures(
+    // ADD THESE LINES BEFORE KERNEL LAUNCH:
+    if (borderx < window_hw)  borderx = window_hw;
+    if (bordery < window_hh)  bordery = window_hh;
+
+    launchKLTSelectGoodFeatures(
     ptr,   // device pointer to pointlist (int*)
     gradx->data,       // device pointer to gradx (float*)
     grady->data,       // device pointer to grady (float*)
@@ -410,6 +414,12 @@ void _KLTSelectGoodFeatures(
     window_hh,
     tc->nSkippedPixels
 );
+
+// ADD THESE LINES AFTER KERNEL LAUNCH:
+int step = tc->nSkippedPixels + 1;
+int numX = (ncols - 2*borderx + step - 1) / step;
+int numY = (nrows - 2*bordery + step - 1) / step;
+npoints = numX * numY;
 
   }
 			
