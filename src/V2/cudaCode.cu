@@ -3,42 +3,82 @@
 #include <cstdio>
 #include "cudaCode.h"
 
-// --- GPU kernel (runs on device) ---
-__global__ void exampleKernel(float *d_data, int n)
+__device__ float minEigenvalue(float gxx, float gxy, float gyy)
 {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < n) {
-        float x = d_data[idx];
-        // simple demo computation
-        d_data[idx] = x * x + 1.0f;
+    return 0.5f * (gxx + gyy - sqrtf((gxx - gyy) * (gxx - gyy) + 4.0f * gxy * gxy));
+}
+
+
+__global__ void KLTSelectGoodFeaturesKernel(
+    int *pointlist,
+    const float *gradx,
+    const float *grady,
+    int ncols, int nrows,
+    int borderx, int bordery,
+    int window_hw, int window_hh,
+    int nSkippedPixels,
+    unsigned int limit)
+{
+    int step = nSkippedPixels + 1;
+
+    int x = borderx + (blockIdx.x * blockDim.x + threadIdx.x) * step;
+    int y = bordery + (blockIdx.y * blockDim.y + threadIdx.y) * step;
+
+    if (x >= ncols - borderx || y >= nrows - bordery)
+        return;
+
+    float gxx = 0.0f, gxy = 0.0f, gyy = 0.0f;
+
+    // Sum gradients in surrounding window
+    for (int yy = y - window_hh; yy <= y + window_hh; yy++) {
+        for (int xx = x - window_hw; xx <= x + window_hw; xx++) {
+            float gx = gradx[yy * ncols + xx];
+            float gy = grady[yy * ncols + xx];
+            gxx += gx * gx;
+            gxy += gx * gy;
+            gyy += gy * gy;
+        }
     }
+
+    float val = minEigenvalue(gxx, gxy, gyy);
+    if (val > limit) val = (float) limit;
+
+    // Write to pointlist (3 ints per point)
+    int idx = (y - bordery) / step * ((ncols - 2*borderx + step - 1)/step) * 3
+            + (x - borderx) / step * 3;
+    pointlist[idx]     = x;
+    pointlist[idx + 1] = y;
+    pointlist[idx + 2] = (int) val;
 }
 
-// --- Host wrapper callable from C ---
-extern "C" void runCudaExampleKernel(float *data, int n)
+
+void launchKLTSelectGoodFeatures(
+    int *d_pointlist,
+    const float *d_gradx,
+    const float *d_grady,
+    int ncols, int nrows,
+    int borderx, int bordery,
+    int window_hw, int window_hh,
+    int nSkippedPixels)
 {
-    float *d_data;
-    size_t bytes = sizeof(float) * n;
+    unsigned int limit = (1u << (sizeof(int) * 8 - 1)) - 1;
 
-    // Allocate device memory
-    cudaMalloc(&d_data, bytes);
+    int step = nSkippedPixels + 1;
 
-    // Copy data to device
-    cudaMemcpy(d_data, data, bytes, cudaMemcpyHostToDevice);
+    dim3 blockSize(16, 16);
+    dim3 gridSize(
+        ( (ncols - 2*borderx + step - 1) / step + blockSize.x - 1) / blockSize.x,
+        ( (nrows - 2*bordery + step - 1) / step + blockSize.y - 1) / blockSize.y
+    );
 
-    // Launch kernel
-    int blockSize = 256;
-    int gridSize  = (n + blockSize - 1) / blockSize;
+    KLTSelectGoodFeaturesKernel<<<gridSize, blockSize>>>(
+        d_pointlist, d_gradx, d_grady,
+        ncols, nrows,
+        borderx, bordery,
+        window_hw, window_hh,
+        nSkippedPixels,
+        limit
+    );
 
-    exampleKernel<<<gridSize, blockSize>>>(d_data, n);
     cudaDeviceSynchronize();
-
-    // Copy results back
-    cudaMemcpy(data, d_data, bytes, cudaMemcpyDeviceToHost);
-
-    // Free device memory
-    cudaFree(d_data);
-
-    printf("[CUDA] Kernel executed successfully on %d elements\n", n);
 }
-    
