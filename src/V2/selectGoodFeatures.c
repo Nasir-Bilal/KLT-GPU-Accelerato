@@ -398,7 +398,7 @@ void _KLTSelectGoodFeatures(
 
     /* For most of the pixels in the image, do ... */
     ptr = pointlist;
-    launchKLTSelectGoodFeatures(
+     launchKLTSelectGoodFeatures(
     ptr,   // device pointer to pointlist (int*)
     gradx->data,       // device pointer to gradx (float*)
     grady->data,       // device pointer to grady (float*)
