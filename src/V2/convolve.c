@@ -134,14 +134,10 @@ void _KLTGetKernelWidths(
  * _convolveImageHoriz
  */
 
-static void _convolveImageHoriz(
-  _KLT_FloatImage imgin,
-  ConvolutionKernel kernel,
-  _KLT_FloatImage imgout)
+static void _convolveImageHoriz(  _KLT_FloatImage imgin,  ConvolutionKernel kernel,  _KLT_FloatImage imgout)
 {
   float *ptrrow = imgin->data;           /* Points to row's first pixel */
-  register float *ptrout = imgout->data, /* Points to next output pixel */
-    *ppp;
+  register float *ptrout = imgout->data, /* Points to next output pixel */ *ppp;
   register float sum;
   register int radius = kernel.width / 2;
   register int ncols = imgin->ncols, nrows = imgin->nrows;
