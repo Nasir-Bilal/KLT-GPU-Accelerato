@@ -1,4 +1,3 @@
-// src/V2/cudaCode.h
 #ifndef CUDA_CODE_H
 #define CUDA_CODE_H
 
@@ -31,6 +30,51 @@ void launchKLTSelectGoodFeatures(
 // Optional example kernel you can call from C code
 // Keeps compatibility with the example from your skeleton
 void runCudaExampleKernel(float *data, int n);
+
+/*--------------- _convolveImageHoriz ---------------*/
+// Simple mapping wrapper: launch CUDA kernel that computes horizontal convolution.
+// - h_imgin: pointer to input image pixels (row-major, size = ncols * nrows)
+// - h_kernel: pointer to kernel data (length = kernelWidth)
+// - h_imgout: pointer to output image buffer (row-major, size = ncols * nrows)
+// - ncols, nrows: image dimensions
+// - kernelWidth: must be odd
+void convolve_horiz_cuda(const float* h_imgin,
+                         const float* h_kernel,
+                         float* h_imgout,
+                         int ncols,
+                         int nrows,
+                         int kernelWidth);
+
+// Optional CPU reference implementation (same semantics as the GPU mapping version).
+// Provided so callers can use it for verification in tests.
+void convolve_horiz_cpu(const float* imgin,
+                        const float* kernel,
+                        float* imgout,
+                        int ncols,
+                        int nrows,
+                        int kernelWidth);
+    
+/*--------------- _convolveImageVert ---------------*/
+// Simple mapping wrapper: launch CUDA kernel that computes vertical convolution.
+// - h_imgin: pointer to input image pixels (row-major, size = ncols * nrows)
+// - h_kernel: pointer to kernel data (length = kernelWidth)
+// - h_imgout: pointer to output image buffer (row-major, size = ncols * nrows)
+// - ncols, nrows: image dimensions
+// - kernelWidth: must be odd
+void convolve_vert_cuda(const float* h_imgin,
+    const float* h_kernel,
+    float* h_imgout,
+    int ncols,
+    int nrows,
+    int kernelWidth);
+
+// Optional CPU reference implementation of vertical convolution (for verification)
+void convolve_vert_cpu(const float* imgin,
+   const float* kernel,
+   float* imgout,
+   int ncols,
+   int nrows,
+   int kernelWidth);
 
 #ifdef __cplusplus
 }
