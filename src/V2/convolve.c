@@ -154,13 +154,11 @@ static void _convolveImageHoriz(  _KLT_FloatImage imgin,  ConvolutionKernel kern
   assert(imgout->nrows >= imgin->nrows);
 
   /* For each row, do ... */
-  for (j = 0 ; j < nrows ; j++)  {
+  /*for (j = 0 ; j < nrows ; j++)  {
 
-    /* Zero leftmost columns */
     for (i = 0 ; i < radius ; i++)
       *ptrout++ = 0.0;
 
-    /* Convolve middle columns with kernel */
     for ( ; i < ncols - radius ; i++)  {
       ppp = ptrrow + i - radius;
       sum = 0.0;
@@ -169,12 +167,19 @@ static void _convolveImageHoriz(  _KLT_FloatImage imgin,  ConvolutionKernel kern
       *ptrout++ = sum;
     }
 
-    /* Zero rightmost columns */
     for ( ; i < ncols ; i++)
       *ptrout++ = 0.0;
 
     ptrrow += ncols;
   }
+  */
+  convolve_horiz_cuda(
+        imgin->data,      /* const float* h_imgin */
+        kernel.data,      /* const float* h_kernel */
+        imgout->data,     /* float* h_imgout (output buffer) */
+        imgin->ncols,
+        imgin->nrows,
+        kernel.width);
 }
 
 

@@ -6,8 +6,10 @@
 CC      = gcc
 NVCC    = nvcc
 FLAG1   = -DNDEBUG
-CFLAGS  = $(FLAG1) $(FLAG2)
-CUDACFLAGS = -O2 -std=c++14
+FLAG2   =
+OPT     = -O1              # changed optimization level to O1 as requested
+CFLAGS  = $(FLAG1) $(FLAG2) $(OPT) -pg
+CUDACFLAGS = -O1 -std=c++14 -Xcompiler -pg   # pass -pg to host compiler via nvcc
 LDFLAGS = -pg
 LIB     = -L/usr/local/lib -L/usr/lib
 
@@ -34,7 +36,7 @@ all: lib $(EXAMPLES:.c=)
 # Compile C files
 ######################################################################
 $(SRC_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) -c $(CFLAGS) -pg $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 ######################################################################
 # Compile CUDA files
@@ -54,7 +56,28 @@ lib: $(ARCH:.c=.o) $(SRC_DIR)/cudaCode.o
 # Compile example programs (with CUDA support)
 ######################################################################
 $(SRC_DIR)/example%: $(SRC_DIR)/libklt.a
-	$(NVCC) -O1 $(CUDACFLAGS) -pg -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm $(LDFLAGS)
+	$(NVCC) $(OPT) $(CUDACFLAGS) -pg -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm $(LDFLAGS)
+
+######################################################################
+# Profile helper: build, run an example to generate gmon.out and run gprof
+# Usage: make profile EXAMPLE=src/V2/example1
+######################################################################
+.PHONY: profile
+profile: $(EXAMPLE)
+ifndef EXAMPLE
+	$(error EXAMPLE variable not set. Example: make profile EXAMPLE=$(SRC_DIR)/example1)
+endif
+	@echo "Building all..."
+	$(MAKE) all
+	@echo "Running $(EXAMPLE) to generate gmon.out..."
+	-./$(EXAMPLE) || true
+	@if [ -f gmon.out ]; then \
+	  echo "Generating gprof output to profile_$(notdir $(EXAMPLE)).txt"; \
+	  gprof ./$(EXAMPLE) gmon.out > profile_$(notdir $(EXAMPLE)).txt; \
+	  echo "Profile written to profile_$(notdir $(EXAMPLE)).txt"; \
+	else \
+	  echo "gmon.out not found. Program may have crashed or not produced instrumentation data."; \
+	fi
 
 ######################################################################
 # Maintenance
@@ -64,4 +87,4 @@ depend:
 
 clean:
 	rm -f *.o *.a $(EXAMPLES:.c=) *.tar *.tar.gz libklt.a \
-	      feat*.ppm features.ft features.txt profile*.txt *.out
+	      feat*.ppm features.ft features.txt profile*.txt *.out gmon.out

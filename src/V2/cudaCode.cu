@@ -1,6 +1,7 @@
 // src/V2/cudaCode.cu
 #include <cuda_runtime.h>
 #include <cstdio>
+#include <cassert>
 #include "cudaCode.h"
 
 // --- GPU kernel (runs on device) ---
