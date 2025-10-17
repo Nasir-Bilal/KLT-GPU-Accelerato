@@ -1,55 +1,103 @@
-# Prerequisites
-*.d
+# -----------------------------
+# KLT + Visual Studio + CUDA
+# -----------------------------
 
-# Object files
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Build Artifacts ---
 *.o
-*.ko
 *.obj
-*.elf
-
-# Linker output
+*.lo
+*.la
+*.slo
 *.ilk
-*.map
+*.pdb
+*.idb
 *.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
 *.lib
 *.a
-*.la
-*.lo
+*.ncb
+*.pch
+*.sbr
+*.rsp
+*.suo
+*.tlog
+*.log
+*.cache
+*.pdb
+*.opendb
+*.VC.db
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
+# --- Executables / Binaries ---
 *.exe
 *.out
+*.dll
+*.so
+*.dylib
 *.app
-*.i*86
-*.x86_64
-*.hex
+*.run
+*.bin
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# --- CUDA ---
+*.cu.cpp
+*.ptx
+*.cubin
+*.fatbin
+*.gpu
+*.nvvp
+*.profile
+*.tmp
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# --- Visual Studio Project Files ---
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.sln
+*.user
+*.vs/
+.vscode/
+ipch/
+*.opensdf
+*.sdf
 
-# debug information files
-*.dwo
+# --- Build Folders ---
+/build/
+/bin/
+/obj/
+/out/
+/Debug/
+/Release/
+/x64/
+/x86/
+
+
+
+# --- Reports / Profiling / Logs ---
+reports/
+*.pgd
+*.pgc
+*.gcda
+*.gcno
+*.gcov
+*.prof
+*.log
+
+# --- Temporary and Backup Files ---
+*~
+*.swp
+*.bak
+*.tmp
+
+# --- Python (if used for helper scripts) ---
+__pycache__/
+*.pyc
+
+# --- Data / Test Outputs ---
+/data/output/
+/data/temp/
+*.pnm
+*.ppm
+*.pgm
