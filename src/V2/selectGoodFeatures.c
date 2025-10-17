@@ -19,7 +19,6 @@
 #include "klt_util.h"
 #include "pyramid.h"
 #include "cudaCode.h"
-#include <time.h> //rm
 
 int KLT_verbose = 1;
 
@@ -395,19 +394,13 @@ void _KLTSelectGoodFeatures(
     for (i = 0 ; i < sizeof(int) ; i++)  limit *= 256;
     limit = limit/2 - 1;
     
-    //rm
-    struct timespec start, end ,startinner, endinner;
-    double elapsed, elapsedInner, elapsedInnerSum;
 
-    // Record start time
-    clock_gettime(CLOCK_MONOTONIC, &start); //rm
 
     /* For most of the pixels in the image, do ... */
     ptr = pointlist;
     for (y = bordery ; y < nrows - bordery ; y += tc->nSkippedPixels + 1)
       for (x = borderx ; x < ncols - borderx ; x += tc->nSkippedPixels + 1)  {
 
-        clock_gettime(CLOCK_MONOTONIC, &startinner); //rm
         /* Sum the gradients in the surrounding window */
         gxx = 0;  gxy = 0;  gyy = 0;
         for (yy = y-window_hh ; yy <= y+window_hh ; yy++)
@@ -418,12 +411,6 @@ void _KLTSelectGoodFeatures(
             gxy += gx * gy;
             gyy += gy * gy;
           }
-
-          clock_gettime(CLOCK_MONOTONIC, &endinner); //rm
-      // Compute elapsed time in seconds
-      elapsedInner = (endinner.tv_sec - startinner.tv_sec);
-      elapsedInner += (endinner.tv_nsec - startinner.tv_nsec) / 1e9;
-      elapsedInnerSum +=elapsedInner; 
 
         /* Store the trackability of the pixel as the minimum
            of the two eigenvalues */
@@ -439,17 +426,6 @@ void _KLTSelectGoodFeatures(
         *ptr++ = (int) val;
         npoints++;
       }
-
-      clock_gettime(CLOCK_MONOTONIC, &end); //rm
-      // Compute elapsed time in seconds
-      elapsed = (end.tv_sec - start.tv_sec);
-      elapsed += (end.tv_nsec - start.tv_nsec) / 1e9;
-
-      printf("\n#################################Elapsed time: %.6f seconds\n", elapsed);
-      printf("\n#################################elapsedInnerSum time: %.6f seconds\n", elapsedInnerSum);
-      printf("\n#################################Only outer loop: %.6f seconds\n", elapsed - elapsedInnerSum);
-     
-      //sleep(5);
   }
 			
   /* Sort the features  */

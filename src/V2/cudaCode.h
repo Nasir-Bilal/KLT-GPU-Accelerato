@@ -1,3 +1,4 @@
+// src/V2/cudaCode.h
 #ifndef CUDA_CODE_H
 #define CUDA_CODE_H
 
@@ -5,7 +6,8 @@
 extern "C" {
 #endif
 
-void runMyCudaKernel(float *input, float *output, int size);
+// Example wrapper function you can call from C code
+void runCudaExampleKernel(float *data, int n);
 
 #ifdef __cplusplus
 }

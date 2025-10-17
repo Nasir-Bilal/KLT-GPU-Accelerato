@@ -1,0 +1,67 @@
+######################################################################
+# GPU BUILD (V2)
+# Uses nvcc to compile and link CUDA + KLT files
+######################################################################
+
+CC      = gcc
+NVCC    = nvcc
+FLAG1   = -DNDEBUG
+CFLAGS  = $(FLAG1) $(FLAG2)
+CUDACFLAGS = -O2 -std=c++14
+LDFLAGS = -pg
+LIB     = -L/usr/local/lib -L/usr/lib
+
+SRC_DIR = src/V2
+
+EXAMPLES = $(SRC_DIR)/example1.c $(SRC_DIR)/example2.c $(SRC_DIR)/example3.c \
+           $(SRC_DIR)/example4.c $(SRC_DIR)/example5.c
+
+ARCH = $(SRC_DIR)/convolve.c $(SRC_DIR)/error.c $(SRC_DIR)/pnmio.c \
+       $(SRC_DIR)/pyramid.c $(SRC_DIR)/selectGoodFeatures.c \
+       $(SRC_DIR)/storeFeatures.c $(SRC_DIR)/trackFeatures.c \
+       $(SRC_DIR)/klt.c $(SRC_DIR)/klt_util.c $(SRC_DIR)/writeFeatures.c
+
+CUDA_SRC = $(SRC_DIR)/cudaCode.cu
+
+.SUFFIXES: .c .o .cu
+
+######################################################################
+# Default target
+######################################################################
+all: lib $(EXAMPLES:.c=)
+
+######################################################################
+# Compile C files
+######################################################################
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) -c $(CFLAGS) -pg $< -o $@
+
+######################################################################
+# Compile CUDA files
+######################################################################
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.cu
+	$(NVCC) $(CUDACFLAGS) -c $< -o $@
+
+######################################################################
+# Build static library (includes CUDA objects)
+######################################################################
+lib: $(ARCH:.c=.o) $(SRC_DIR)/cudaCode.o
+	rm -f $(SRC_DIR)/libklt.a
+	ar ruv $(SRC_DIR)/libklt.a $(ARCH:.c=.o) $(SRC_DIR)/cudaCode.o
+	rm -f $(SRC_DIR)/*.o
+
+######################################################################
+# Compile example programs (with CUDA support)
+######################################################################
+$(SRC_DIR)/example%: $(SRC_DIR)/libklt.a
+	$(NVCC) -O1 $(CUDACFLAGS) -pg -o $@ $@.c -L$(SRC_DIR) -lklt $(LIB) -lm $(LDFLAGS)
+
+######################################################################
+# Maintenance
+######################################################################
+depend:
+	makedepend $(ARCH) $(EXAMPLES)
+
+clean:
+	rm -f *.o *.a $(EXAMPLES:.c=) *.tar *.tar.gz libklt.a \
+	      feat*.ppm features.ft features.txt profile*.txt *.out

@@ -1,67 +1,44 @@
+// src/V2/cudaCode.cu
 #include <cuda_runtime.h>
+#include <cstdio>
 #include "cudaCode.h"
-#include <stdio.h>
 
-__global__ void calculateGradientSelectGoodFeatures(
-    float *d_gradDataX, float *d_gradDataY, int ncols, int nrows, float *gxx, float *gxy, float *gyy
-    ) {
-    int xx = blockIdx.x * blockDim.x + threadIdx.x;
-    int yy = blockIdx.y * blockDim.y + threadIdx.y;
-    int idx = ncols * yy + xx;
-   
-
-    if (xx < ncols && yy < nrows){
-        float gx = *(d_gradDataX + idx);
-        float gy = *(d_gradDataY + idx);
-        atomicAdd(gxx, gx * gx);
-        atomicAdd(gxy, gx * gy);
-        atomicAdd(gyy, gy * gy);
-
+// --- GPU kernel (runs on device) ---
+__global__ void exampleKernel(float *d_data, int n)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n) {
+        float x = d_data[idx];
+        // simple demo computation
+        d_data[idx] = x * x + 1.0f;
     }
-        
 }
 
-void runCalculateGradient(float *gradDataX, float *gradDataY, int ncols, int nrows) {
-    float *d_gradDataX, *d_gradDataY;
-    float *gxx = 0, *gxy = 0, *gyy = 0; 
-    float h_gxx = 0, h_gxy = 0, h_gyy = 0;
+// --- Host wrapper callable from C ---
+extern "C" void runCudaExampleKernel(float *data, int n)
+{
+    float *d_data;
+    size_t bytes = sizeof(float) * n;
+
+    // Allocate device memory
+    cudaMalloc(&d_data, bytes);
+
+    // Copy data to device
+    cudaMemcpy(d_data, data, bytes, cudaMemcpyHostToDevice);
+
+    // Launch kernel
+    int blockSize = 256;
+    int gridSize  = (n + blockSize - 1) / blockSize;
+
+    exampleKernel<<<gridSize, blockSize>>>(d_data, n);
+    cudaDeviceSynchronize();
+
+    // Copy results back
+    cudaMemcpy(data, d_data, bytes, cudaMemcpyDeviceToHost);
+
+    // Free device memory
+    cudaFree(d_data);
+
+    printf("[CUDA] Kernel executed successfully on %d elements\n", n);
+}
     
-
-    cudaMalloc(&d_gradDataX ,sizeof(float) * ncols * nrows );
-    cudaMalloc(&d_gradDataY ,sizeof(float) * ncols * nrows);
-    cudaMalloc(&d_gxx, sizeof(float));
-    cudaMalloc(&d_gxy, sizeof(float));
-    cudaMalloc(&d_gyy, sizeof(float));
-
-    cudaMemcpy( d_gradDataX, gradDataX, sizeof(float) * ncols * nrows, cudaMemcpyHostToDevice)
-    cudaMemcpy( d_gradDataY, gradDataY, sizeof(float) * ncols * nrows, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_gxx, &h_gxx, sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_gxy, &h_gxy, sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_gyy, &h_gyy, sizeof(float), cudaMemcpyHostToDevice);
-
-    dim3 blockSize(16,16);
-    dim3 gridSize (
-        (ncols + blockSize.x - 1) / blockSize.x,
-        (nrows + blockSize.y - 1)/ blockSize.y 
-    );
-
-    //manage the output.
-    calculateGradientSelectGoodFeatures<<<gridSize , blockSize>>>(
-        d_gradDataX, d_gradDataY,ncols,nrows, gxx, gxy, gyy 
-        );
-
-    cudaDeviceSynchronize();  // Wait for GPU to finish
-
-
-    cudaMemcpy(&h_gxx, d_gxx, sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_gxy, d_gxy, sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_gyy, d_gyy, sizeof(float), cudaMemcpyDeviceToHost);
-
-   
-    cudaFree(d_gradDataX);
-    cudaFree(d_gradDataY);
-    cudaFree(d_gxx);
-    cudaFree(d_gxy);
-    cudaFree(d_gyy);
-   
-}

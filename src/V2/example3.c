@@ -9,6 +9,7 @@ saved to a text file; each feature list is also written to a PPM file.
 #include <stdio.h>
 #include "pnmio.h"
 #include "klt.h"
+#include "cudaCode.h"
 
 /* #define REPLACE */
 
