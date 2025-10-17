@@ -131,3 +131,68 @@ void convolve_horiz_cuda(const float* h_imgin, const float* h_kernel, float* h_i
     cudaFree(d_imgout);
     cudaFree(d_kernel);
 }
+
+/*--------------- _convolveImageVert ---------------*/
+
+//KERNEL
+__global__ void convolve_vert_kernel(const float* __restrict__ imgin, const float* __restrict__ kernel_data, float* __restrict__ imgout, int ncols, int nrows, int kernelWidth)
+{
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (col >= ncols || row >= nrows) return;
+
+    int radius = kernelWidth / 2;
+
+    // Border handling: top/bottom rows within radius are zero
+    if (row < radius || row >= (nrows - radius)) {
+        imgout[row * ncols + col] = 0.0f;
+        return;
+    }
+
+    // Compute convolution in column direction.
+    // Mirror CPU order: for (k = kernel.width-1; k >= 0; k--) sum += *ppp++ * kernel.data[k];
+    float sum = 0.0f;
+    int p_row = row - radius;        // starting row index for ppp
+    int base_index = col;            // column offset for indexing: idx = p_row * ncols + col
+    for (int k = kernelWidth - 1; k >= 0; --k) {
+        float v = imgin[p_row * ncols + base_index]; // *ppp
+        float w = kernel_data[k];
+        sum += v * w;
+        ++p_row; // ppp += ncols (move one row down)
+    }
+
+    imgout[row * ncols + col] = sum;
+}
+
+//WRAPPER
+void convolve_vert_cuda(const float* h_imgin, const float* h_kernel, float* h_imgout, int ncols, int nrows, int kernelWidth)
+{
+    assert(kernelWidth % 2 == 1);
+
+    size_t imgBytes = (size_t)ncols * (size_t)nrows * sizeof(float);
+    size_t kernelBytes = (size_t)kernelWidth * sizeof(float);
+
+    float *d_imgin = NULL, *d_imgout = NULL, *d_kernel = NULL;
+    CUDA_CHECK(cudaMalloc(&d_imgin, imgBytes));
+    CUDA_CHECK(cudaMalloc(&d_imgout, imgBytes));
+    CUDA_CHECK(cudaMalloc(&d_kernel, kernelBytes));
+
+    CUDA_CHECK(cudaMemcpy(d_imgin, h_imgin, imgBytes, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_kernel, h_kernel, kernelBytes, cudaMemcpyHostToDevice));
+
+    // choose simple 2D block/grid
+    dim3 block(16, 16);
+    dim3 grid( (ncols + block.x - 1) / block.x,
+               (nrows + block.y - 1) / block.y );
+
+    convolve_vert_kernel<<<grid, block>>>(d_imgin, d_kernel, d_imgout, ncols, nrows, kernelWidth);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    CUDA_CHECK(cudaMemcpy(h_imgout, d_imgout, imgBytes, cudaMemcpyDeviceToHost));
+
+    cudaFree(d_imgin);
+    cudaFree(d_imgout);
+    cudaFree(d_kernel);
+}

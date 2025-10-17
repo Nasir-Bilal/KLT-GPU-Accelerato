@@ -210,16 +210,13 @@ static void _convolveImageVert(
   assert(imgout->ncols >= imgin->ncols);
   assert(imgout->nrows >= imgin->nrows);
 
-  /* For each column, do ... */
-  for (i = 0 ; i < ncols ; i++)  {
+  /*for (i = 0 ; i < ncols ; i++)  {
 
-    /* Zero topmost rows */
     for (j = 0 ; j < radius ; j++)  {
       *ptrout = 0.0;
       ptrout += ncols;
     }
 
-    /* Convolve middle rows with kernel */
     for ( ; j < nrows - radius ; j++)  {
       ppp = ptrcol + ncols * (j - radius);
       sum = 0.0;
@@ -231,7 +228,6 @@ static void _convolveImageVert(
       ptrout += ncols;
     }
 
-    /* Zero bottommost rows */
     for ( ; j < nrows ; j++)  {
       *ptrout = 0.0;
       ptrout += ncols;
@@ -240,6 +236,15 @@ static void _convolveImageVert(
     ptrcol++;
     ptrout -= nrows * ncols - 1;
   }
+  */
+
+  convolve_vert_cuda(
+        imgin->data,      /* const float* h_imgin */
+        kernel.data,      /* const float* h_kernel */
+        imgout->data,     /* float* h_imgout (output buffer) */
+        imgin->ncols,
+        imgin->nrows,
+        kernel.width);
 }
 
 
