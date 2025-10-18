@@ -1,9 +1,13 @@
 #ifndef CUDA_CODE_H
 #define CUDA_CODE_H
 
+#include "klt_util.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef float *_FloatWindow;
 
 #include <stddef.h>
 
@@ -23,15 +27,6 @@ void convolve_horiz_cuda(const float* h_imgin,
                          int ncols,
                          int nrows,
                          int kernelWidth);
-
-// Optional CPU reference implementation (same semantics as the GPU mapping version).
-// Provided so callers can use it for verification in tests.
-void convolve_horiz_cpu(const float* imgin,
-                        const float* kernel,
-                        float* imgout,
-                        int ncols,
-                        int nrows,
-                        int kernelWidth);
     
 /*--------------- _convolveImageVert ---------------*/
 // Simple mapping wrapper: launch CUDA kernel that computes vertical convolution.
@@ -47,13 +42,72 @@ void convolve_vert_cuda(const float* h_imgin,
     int nrows,
     int kernelWidth);
 
-// Optional CPU reference implementation of vertical convolution (for verification)
-void convolve_vert_cpu(const float* imgin,
-   const float* kernel,
-   float* imgout,
-   int ncols,
-   int nrows,
-   int kernelWidth);
+/*--------------- _gpu_computeIntensityDifference ---------------*/
+
+void gpu_computeIntensityDifference(_KLT_FloatImage img1,
+    _KLT_FloatImage img2,
+    float x1, float y1,
+    float x2, float y2,
+    int width, int height,
+    _FloatWindow imgdiff);
+
+/*--------------- _gpu_computeGradientSum ---------------*/
+void gpu_computeGradientSum(_KLT_FloatImage gradx1,
+_KLT_FloatImage grady1,
+_KLT_FloatImage gradx2,
+_KLT_FloatImage grady2,
+float x1, float y1,
+float x2, float y2,
+int width, int height,
+_FloatWindow gradx,
+_FloatWindow grady);
+
+/*--------------- _gpu_computeIntensityDifferenceLightingInsensitive ---------------*/
+void gpu_computeIntensityDifferenceLightingInsensitive(_KLT_FloatImage img1,
+                       _KLT_FloatImage img2,
+                       float x1, float y1,
+                       float x2, float y2,
+                       int width, int height,
+                       _FloatWindow imgdiff);
+
+/*--------------- _gpu_computeGradientSumLightingInsensitive ---------------*/
+void gpu_computeGradientSumLightingInsensitive(_KLT_FloatImage gradx1,
+               _KLT_FloatImage grady1,
+               _KLT_FloatImage gradx2,
+               _KLT_FloatImage grady2,
+               _KLT_FloatImage img1,
+               _KLT_FloatImage img2,
+               float x1, float y1,
+               float x2, float y2,
+               int width, int height,
+               _FloatWindow gradx,
+               _FloatWindow grady);
+
+/*--------------- _gpu_am_getGradientWinAffine ---------------*/
+void gpu_am_getGradientWinAffine(_KLT_FloatImage in_gradx,
+ _KLT_FloatImage in_grady,
+ float x, float y,
+ float Axx, float Ayx, float Axy, float Ayy,
+ int width, int height,
+ _FloatWindow out_gradx,
+ _FloatWindow out_grady);
+
+/*--------------- _gpu_am_computeAffineMappedImage ---------------*/
+void gpu_am_computeAffineMappedImage(_KLT_FloatImage img,
+     float x, float y,
+     float Axx, float Ayx, float Axy, float Ayy,
+     int width, int height,
+     _FloatWindow imgdiff);
+
+/*--------------- _gpu_am_computeIntensityDifferenceAffine ---------------*/
+void gpu_am_computeIntensityDifferenceAffine(_KLT_FloatImage img1,
+             _KLT_FloatImage img2,
+             float x1, float y1,
+             float x2, float y2,
+             float Axx, float Ayx, float Axy, float Ayy,
+             int width, int height,
+             _FloatWindow imgdiff);
+
 
 #ifdef __cplusplus
 }

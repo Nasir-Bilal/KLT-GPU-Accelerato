@@ -16,10 +16,11 @@
 #include "klt.h"
 #include "klt_util.h"	/* _KLT_FloatImage */
 #include "pyramid.h"	/* _KLT_Pyramid */
+#include "cudaCode.h"
 
 extern int KLT_verbose;
 
-typedef float *_FloatWindow;
+//typedef float *_FloatWindow;
 
 /*********************************************************************
  * _interpolate
@@ -73,17 +74,21 @@ static void _computeIntensityDifference(
   int width, int height,  /* size of window */
   _FloatWindow imgdiff)   /* output */
 {
+  /*
   register int hw = width/2, hh = height/2;
   float g1, g2;
   register int i, j;
 
-  /* Compute values */
+  // Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       g1 = _interpolate(x1+i, y1+j, img1);
       g2 = _interpolate(x2+i, y2+j, img2);
       *imgdiff++ = g1 - g2;
     }
+  */
+  
+  gpu_computeIntensityDifference(img1, img2, x1, y1, x2, y2, width, height, imgdiff);
 }
 
 
@@ -106,11 +111,12 @@ static void _computeGradientSum(
   _FloatWindow gradx,      /* output */
   _FloatWindow grady)      /*   " */
 {
+  /*
   register int hw = width/2, hh = height/2;
   float g1, g2;
   register int i, j;
 
-  /* Compute values */
+  // Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       g1 = _interpolate(x1+i, y1+j, gradx1);
@@ -120,6 +126,9 @@ static void _computeGradientSum(
       g2 = _interpolate(x2+i, y2+j, grady2);
       *grady++ = g1 + g2;
     }
+  */
+
+  gpu_computeGradientSum(gradx1, grady1, gradx2, grady2, x1, y1, x2, y2, width, height, gradx, grady);
 }
 
 /*********************************************************************
@@ -138,13 +147,15 @@ static void _computeIntensityDifferenceLightingInsensitive(
   int width, int height,  /* size of window */
   _FloatWindow imgdiff)   /* output */
 {
+  /*
   register int hw = width/2, hh = height/2;
   float g1, g2, sum1_squared = 0, sum2_squared = 0;
   register int i, j;
   
   float sum1 = 0, sum2 = 0;
   float mean1, mean2,alpha,belta;
-  /* Compute values */
+
+  //Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       g1 = _interpolate(x1+i, y1+j, img1);
@@ -166,6 +177,9 @@ static void _computeIntensityDifferenceLightingInsensitive(
       g2 = _interpolate(x2+i, y2+j, img2);
       *imgdiff++ = g1- g2*alpha-belta;
     } 
+  */
+  
+  gpu_computeIntensityDifferenceLightingInsensitive(img1, img2, x1, y1, x2, y2, width, height, imgdiff);
 }
 
 
@@ -191,6 +205,7 @@ static void _computeGradientSumLightingInsensitive(
   _FloatWindow gradx,      /* output */
   _FloatWindow grady)      /*   " */
 {
+  /*
   register int hw = width/2, hh = height/2;
   float g1, g2, sum1_squared = 0, sum2_squared = 0;
   register int i, j;
@@ -207,7 +222,7 @@ static void _computeGradientSumLightingInsensitive(
   mean2 = sum2_squared/(width*height);
   alpha = (float) sqrt(mean1/mean2);
   
-  /* Compute values */
+   Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       g1 = _interpolate(x1+i, y1+j, gradx1);
@@ -217,6 +232,12 @@ static void _computeGradientSumLightingInsensitive(
       g2 = _interpolate(x2+i, y2+j, grady2);
       *grady++ = g1+ g2*alpha;
     }  
+  */
+
+  gpu_computeGradientSumLightingInsensitive(gradx1, grady1, gradx2, grady2,
+                                            img1, img2,
+                                            x1, y1, x2, y2, width, height,
+                                            gradx, grady);
 }
 
 /*********************************************************************
@@ -616,11 +637,12 @@ static void _am_getGradientWinAffine(
 				     _FloatWindow out_gradx,      /* output */
 				     _FloatWindow out_grady)      /* output */
 {
+  /*
   register int hw = width/2, hh = height/2;
   register int i, j;
   float mi, mj;
  
-  /* Compute values */
+  //Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       mi = Axx * i + Axy * j;
@@ -628,7 +650,8 @@ static void _am_getGradientWinAffine(
       *out_gradx++ = _interpolate(x+mi, y+mj, in_gradx);
       *out_grady++ = _interpolate(x+mi, y+mj, in_grady);
     }
-  
+  */
+  gpu_am_getGradientWinAffine(in_gradx, in_grady, x, y, Axx, Ayx, Axy, Ayy, width, height, out_gradx, out_grady);
 }
 
 /*********************************************************************
@@ -644,17 +667,20 @@ static void _am_computeAffineMappedImage(
 					 int width, int height,  /* size of window */
 					 _FloatWindow imgdiff)   /* output */
 {
+  /*
   register int hw = width/2, hh = height/2;
   register int i, j;
   float mi, mj;
 
-  /* Compute values */
+  //Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       mi = Axx * i + Axy * j;
       mj = Ayx * i + Ayy * j;
       *imgdiff++ = _interpolate(x+mi, y+mj, img);
     }
+  */
+  gpu_am_computeAffineMappedImage(img, x, y, Axx, Ayx, Axy, Ayy, width, height, imgdiff);
 }
 
 
@@ -706,12 +732,13 @@ static void _am_computeIntensityDifferenceAffine(
 						 int width, int height,  /* size of window */
 						 _FloatWindow imgdiff)   /* output */
 {
+  /*
   register int hw = width/2, hh = height/2;
   float g1, g2;
   register int i, j;
   float mi, mj;
 
-  /* Compute values */
+  //Compute values 
   for (j = -hh ; j <= hh ; j++)
     for (i = -hw ; i <= hw ; i++)  {
       g1 = _interpolate(x1+i, y1+j, img1);
@@ -720,6 +747,8 @@ static void _am_computeIntensityDifferenceAffine(
       g2 = _interpolate(x2+mi, y2+mj, img2);
       *imgdiff++ = g1 - g2;
     }
+  */
+  gpu_am_computeIntensityDifferenceAffine(img1, img2, x1, y1, x2, y2, Axx, Ayx, Axy, Ayy, width, height, imgdiff);
 }
 
 /*********************************************************************
@@ -1527,5 +1556,3 @@ void KLTTrackFeatures(
 	}
 
 }
-
-
